@@ -1,12 +1,22 @@
 #pragma once
 
+#include <sys/socket.h>
+#include <string>
+#include "common/common.hpp"
+
 class Client {
 public:
     Client(int domain, int type, int protocol, unsigned int port);
     ~Client();
+
+    int openConnection(const std::string& server_ip);
+    int sendMessage(const std::string& message) const;
+    void closeConnection() const;
 private:
-    int m_Domain;
-    int m_Type;
-    int m_Protocol;
-    unsigned int m_Port;
+    const int m_Domain;
+    const int m_Type;
+    const int m_Protocol;
+    const unsigned int m_Port;
+    int m_Sock;
+    Common m_Common;
 };
