@@ -1,5 +1,8 @@
 #pragma once
 #include <sys/socket.h>
+#include <unordered_map>
+#include <mutex>
+
 #include "common/common.hpp"
 
 class Server {
@@ -11,6 +14,10 @@ public:
     int startListening();
     void closeServer() const;
 private:
+    void handleClient(int clientSock);
+    void broadcast(const std::string& message);
+    void broadcastExcept(int clientSock, const std::string& message);
+private:
     const int m_Domain;
     const int m_Type;
     const int m_Protocol;
@@ -18,4 +25,7 @@ private:
     int m_Sock;
     sockaddr m_SockAddr;
     Common m_Common;
+
+    std::mutex m_UsersMutex;
+    std::unordered_map<int, const std::string> m_UsersMap;
 };

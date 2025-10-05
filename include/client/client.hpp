@@ -10,8 +10,11 @@ public:
     ~Client();
 
     int openConnection(const std::string& server_ip);
-    int sendMessage(const std::string& message) const;
-    void closeConnection() const;
+    void start();
+private:
+    void senderLoop() const;
+    void receiverLoop() const;
+    void getUsername();
 private:
     const int m_Domain;
     const int m_Type;
@@ -19,4 +22,5 @@ private:
     const unsigned int m_Port;
     int m_Sock;
     Common m_Common;
+    std::string m_Username;
 };
