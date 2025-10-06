@@ -2,10 +2,12 @@
 #include <iostream>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <thread>
+
 
 #include "server/server.hpp"
 
-#include <thread>
+
 
 
 Server::Server(const int domain, const int type, const int protocol, const unsigned int port)
@@ -121,9 +123,5 @@ void Server::broadcastExcept(int clientSock, const std::string& message) {
 
         send(sock, message.c_str(), message.size(), 0);
     }
-}
-
-void Server::closeServer() const {
-    close(m_Sock);
 }
 

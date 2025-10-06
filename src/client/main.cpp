@@ -1,5 +1,3 @@
-#include <netinet/in.h>
-
 #include "client/client.hpp"
 
 int main() {

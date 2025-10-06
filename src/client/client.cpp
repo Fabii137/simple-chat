@@ -2,6 +2,7 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+
 #include <cstring>
 #include <iostream>
 #include <ostream>
@@ -23,6 +24,7 @@ int Client::openConnection(const std::string& server_ip) {
     struct sockaddr_in serverAddress;
     m_Sock = socket(m_Domain, m_Type, m_Protocol);
     if (m_Sock < 0) {
+        perror("Creating socket failed");
         return -1;
     }
 
@@ -82,7 +84,7 @@ void Client::receiverLoop() const {
             std::cout << "Connection closed" << std::endl;
             break;
         }
-        buffer[bytesReceived] = '\0';
+        buffer[bytesReceived-1] = '\0';
         std::cout << "[Server] " << buffer << std::endl;
     }
 }

@@ -28,7 +28,7 @@ std::string Common::encrypt(const std::string& s) {
 }
 
 std::string Common::decrypt(const std::string& s) {
-
+    return "";
 }
 
 

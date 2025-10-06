@@ -11,7 +11,6 @@ public:
 
     int bindServer();
     int startListening();
-    void closeServer() const;
 private:
     void handleClient(int clientSock);
     void broadcast(const std::string& message);
