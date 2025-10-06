@@ -1,9 +1,8 @@
 #pragma once
 #include <sys/socket.h>
 #include <unordered_map>
+#include <string>
 #include <mutex>
-
-#include "common/common.hpp"
 
 class Server {
 public:
@@ -24,7 +23,6 @@ private:
     const unsigned int m_Port;
     int m_Sock;
     sockaddr m_SockAddr;
-    Common m_Common;
 
     std::mutex m_UsersMutex;
     std::unordered_map<int, const std::string> m_UsersMap;

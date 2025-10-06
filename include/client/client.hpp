@@ -2,7 +2,6 @@
 
 #include <sys/socket.h>
 #include <string>
-#include "common/common.hpp"
 
 class Client {
 public:
@@ -21,6 +20,5 @@ private:
     const int m_Protocol;
     const unsigned int m_Port;
     int m_Sock;
-    Common m_Common;
     std::string m_Username;
 };

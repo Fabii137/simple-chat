@@ -7,6 +7,7 @@
 #include <ostream>
 #include <thread>
 
+#include "common/common.hpp"
 #include "client/client.hpp"
 
 Client::Client(const int domain, const int type, const int protocol, const unsigned int port)
