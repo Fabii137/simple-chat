@@ -1,108 +1,108 @@
-#include <print>
+#include <arpa/inet.h>
+#include <format>
 #include <netinet/in.h>
 #include <unistd.h>
-#include <arpa/inet.h>
 
 #include <cstring>
 #include <iostream>
 #include <ostream>
 #include <thread>
 
-#include "common/common.hpp"
 #include "client/client.hpp"
+#include "common/common.hpp"
 
-Client::Client(const int domain, const int type, const int protocol, const unsigned int port)
-        : m_Domain(domain), m_Type(type), m_Protocol(protocol), m_Port(port) {
+Client::Client(int domain, int type, int protocol, unsigned int port)
+    : c_Domain(domain), c_Type(type), c_Protocol(protocol), c_Port(port) {}
 
-}
+Client::~Client() {}
 
-Client::~Client() {
+int Client::open(const std::string &server_ip) {
+  struct sockaddr_in serverAddress;
+  m_Sock = socket(c_Domain, c_Type, c_Protocol);
+  if (m_Sock < 0) {
+    perror("Creating socket failed");
+    return -1;
+  }
 
-}
+  serverAddress.sin_family = c_Domain;
+  serverAddress.sin_port = htons(c_Port);
 
-int Client::openConnection(const std::string& server_ip) {
-    struct sockaddr_in serverAddress;
-    m_Sock = socket(m_Domain, m_Type, m_Protocol);
-    if (m_Sock < 0) {
-        perror("Creating socket failed");
-        return -1;
-    }
+  if (inet_pton(c_Domain, server_ip.c_str(), &serverAddress.sin_addr) < 0) {
+    perror("Invalid IP address");
+    return -1;
+  }
 
-    serverAddress.sin_family = m_Domain;
-    serverAddress.sin_port = htons(m_Port);
-
-    if (inet_pton(m_Domain, server_ip.c_str(), &serverAddress.sin_addr) < 0) {
-        perror("Invalid IP address");
-        return -1;
-    }
-
-    if (connect(m_Sock, reinterpret_cast<struct sockaddr *>(&serverAddress), sizeof(serverAddress)) < 0) {
-        perror("Connect failed");
-        return -1;
-    }
-    getUsername();
-    send(m_Sock, m_Username.c_str(), m_Username.size(), 0);
-    std::cout << "Connected" << std::endl;
-    return 0;
+  if (connect(m_Sock, reinterpret_cast<struct sockaddr *>(&serverAddress),
+              sizeof(serverAddress)) < 0) {
+    perror("Connect failed");
+    return -1;
+  }
+  getUsername();
+  std::string encryptedMessage = Common::encrypt(m_Username);
+  send(m_Sock, encryptedMessage.c_str(), encryptedMessage.size(), 0);
+  std::cout << "Connected" << std::endl;
+  return 0;
 }
 
 void Client::start() {
-    std::thread receiver(&Client::receiverLoop, this);
-    senderLoop();
+  std::thread receiver(&Client::receiverLoop, this);
+  senderLoop();
 
-    if (receiver.joinable()) {
-        receiver.join();
-    }
+  if (receiver.joinable()) {
+    receiver.join();
+  }
 }
 
-
 void Client::senderLoop() const {
-    std::string message;
-    while (true) {
-        getline(std::cin, message);
-        if (message == "/exit") {
-            std::cout << "Exiting..." << std::endl;
-            break;
-        }
-
-        if (message.size() > 1023) {
-            std::cout << "Message too large" << std::endl;
-            continue;
-        }
-
-        send(m_Sock, message.c_str(), message.size(), 0);
+  std::string message;
+  while (true) {
+    getline(std::cin, message);
+    if (message == "/exit") {
+      std::cout << "Exiting..." << std::endl;
+      break;
     }
-    shutdown(m_Sock, SHUT_RDWR);
-    close(m_Sock);
+
+    if (message.size() > 1023) {
+      std::cout << "Message too large" << std::endl;
+      continue;
+    }
+    std::string fullMessage = std::format("{}: {}", m_Username, message);
+    std::cout << fullMessage << std::endl;
+
+    std::string encryptedMessage = Common::encrypt(message);
+    send(m_Sock, encryptedMessage.c_str(), encryptedMessage.size(), 0);
+  }
+  shutdown(m_Sock, SHUT_RDWR);
+  close(m_Sock);
 }
 
 void Client::receiverLoop() const {
-    char buffer[1024];
-    while (true) {
-        ssize_t bytesReceived = read(m_Sock, buffer, 1024);
-        if (bytesReceived <= 0) {
-            std::cout << "Connection closed" << std::endl;
-            break;
-        }
-        buffer[bytesReceived-1] = '\0';
-        std::cout << "[Server] " << buffer << std::endl;
+  char buffer[1024];
+  while (true) {
+    ssize_t bytesReceived = read(m_Sock, buffer, 1024);
+    if (bytesReceived <= 0) {
+      std::cout << "Connection closed" << std::endl;
+      break;
     }
+    buffer[bytesReceived] = '\0';
+
+    std::string receivedMessage(buffer);
+    std::string decryptedMessage = Common::decrypt(receivedMessage);
+    std::cout << decryptedMessage << std::endl;
+  }
 }
 
 void Client::getUsername() {
-    std::string username;
-    do {
-        std::cout << "Enter username: ";
-        getline(std::cin, username);
-        Common::trim(username);
+  std::string username;
+  do {
+    std::cout << "Enter username: ";
+    getline(std::cin, username);
+    Common::trim(username);
 
-        if (username.size() > 30) {
-            std::cout << "Maximum size for username is 30 characters" << std::endl;
-            username = "";
-        }
-    } while (username.empty());
-    m_Username = username;
+    if (username.size() > 30) {
+      std::cout << "Maximum size for username is 30 characters" << std::endl;
+      username.clear();
+    }
+  } while (username.empty());
+  m_Username = username;
 }
-
-
-
